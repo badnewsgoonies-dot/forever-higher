@@ -24,7 +24,7 @@ var position_index: int = 0
 
 # Skills this unit knows
 @export_group("Skills")
-@export var skills: Array[Resource] = []
+@export var skills: Array = []
 func initialize():
     current_hp = max_hp
     current_mp = max_mp
