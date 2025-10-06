@@ -29,7 +29,8 @@ enum TargetType {
     SELF
 }
 
-# Battle statesenum BattleState {
+# Battle states
+enum BattleState {
     PLAYER_TURN,
     ENEMY_TURN,
     ANIMATING,
