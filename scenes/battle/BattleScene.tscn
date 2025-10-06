@@ -1,0 +1,118 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8kxwxr3yc7vq"]
+
+[ext_resource type="Script" path="res://scripts/battle/BattleManager.gd" id="1_1"]
+[ext_resource type="Script" path="res://scripts/ui/BattleUI.gd" id="2_1"]
+
+[node name="BattleScene" type="Node2D"]
+
+[node name="BattleField" type="Node2D" parent="."]
+
+[node name="PlayerPositions" type="Node2D" parent="BattleField"]
+position = Vector2(200, 400)
+
+[node name="Position1" type="Marker2D" parent="BattleField/PlayerPositions"]
+position = Vector2(-100, -50)
+
+[node name="Position2" type="Marker2D" parent="BattleField/PlayerPositions"]
+position = Vector2(-50, 0)
+
+[node name="Position3" type="Marker2D" parent="BattleField/PlayerPositions"]
+position = Vector2(0, 50)
+
+[node name="Position4" type="Marker2D" parent="BattleField/PlayerPositions"]
+position = Vector2(50, 100)
+
+[node name="EnemyPositions" type="Node2D" parent="BattleField"]
+position = Vector2(1000, 300)
+
+[node name="Position1" type="Marker2D" parent="BattleField/EnemyPositions"]
+position = Vector2(-50, -30)
+
+[node name="Position2" type="Marker2D" parent="BattleField/EnemyPositions"]
+position = Vector2(0, 20)
+
+[node name="Position3" type="Marker2D" parent="BattleField/EnemyPositions"]
+position = Vector2(50, 70)
+
+[node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("2_1")
+
+[node name="TopBar" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 100.0
+grow_horizontal = 2
+
+[node name="EnemyHealthBars" type="HBoxContainer" parent="UI/TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -650.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 90.0
+grow_horizontal = 0
+alignment = 2
+
+[node name="PlayerHealthBars" type="HBoxContainer" parent="UI/TopBar"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 650.0
+offset_bottom = 90.0
+
+[node name="ActionMenu" type="PanelContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/ActionMenu"]
+layout_mode = 2
+
+[node name="AttackBtn" type="Button" parent="UI/ActionMenu/VBoxContainer"]
+layout_mode = 2
+text = "Attack"
+
+[node name="SkillsBtn" type="Button" parent="UI/ActionMenu/VBoxContainer"]
+layout_mode = 2
+text = "Skills"
+
+[node name="ItemsBtn" type="Button" parent="UI/ActionMenu/VBoxContainer"]
+layout_mode = 2
+text = "Items"
+
+[node name="DefendBtn" type="Button" parent="UI/ActionMenu/VBoxContainer"]
+layout_mode = 2
+text = "Defend"
+
+[node name="CurrentUnitDisplay" type="PanelContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 20.0
+offset_right = 100.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="Label" type="Label" parent="UI/CurrentUnitDisplay"]
+layout_mode = 2
+text = "Current Unit's Turn"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BattleManager" type="Node" parent="."]
+script = ExtResource("1_1")
