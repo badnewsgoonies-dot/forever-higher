@@ -28,7 +28,8 @@ func setup_test_battle():
     mage.unit_name = "Mage"
     mage.unit_class = GameData.UnitClass.MAGE
     mage.max_hp = 80
-    mage.max_mp = 50    mage.attack = 5
+    mage.max_mp = 50
+    mage.attack = 5
     mage.defense = 3
     mage.magic = 15
     mage.speed = 7
@@ -58,7 +59,8 @@ func setup_test_battle():
     # Create Heal skill for healer
     var heal_skill = Skill.new()
     heal_skill.skill_name = "Heal"
-    heal_skill.description = "Restores HP to one ally"    heal_skill.mp_cost = 4
+    heal_skill.description = "Restores HP to one ally"
+    heal_skill.mp_cost = 4
     heal_skill.power = 0
     heal_skill.heal_power = 30
     heal_skill.damage_type = GameData.DamageType.MAGICAL
