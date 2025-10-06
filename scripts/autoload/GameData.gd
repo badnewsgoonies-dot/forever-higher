@@ -56,7 +56,8 @@ var meta_progression = {
 	"best_floor": 0
 }
 
-# Persistent game datavar unlocked_skills: Array = []
+# Persistent game data
+var unlocked_skills: Array = []
 var skill_points: int = 0
 var player_stats = {
 	"max_health": 100,
