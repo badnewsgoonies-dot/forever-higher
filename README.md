@@ -1,121 +1,205 @@
-# Forever Higher - Setup Instructions
+# Forever Higher - Roguelike JRPG Foundation
 
-## ✅ All Files Created Successfully!
+A comprehensive Swift implementation of the foundational systems for a roguelike JRPG, designed for Swift Playgrounds on iPad.
 
-Your game files have been created in the project directory. Follow these steps to get your game running:
+## 🎮 Project Overview
 
-## 🚀 Quick Setup Steps
+Forever Higher combines:
+- **Golden Sun's** turn-based battle mechanics
+- **Pokemon Battle Tower's** progression system  
+- **Slay the Spire's** path selection gameplay
 
-### 1. Open Godot and Load Your Project
-- Open Godot
-- Open the project at: `C:\Users\gxpai\Desktop\forever-higher\forever-higher`
+This is a gameplay-focused implementation that strips away art and aesthetics to concentrate purely on functional game systems.
 
-### 2. Set Up GameData Autoload (CRITICAL!)
-1. Go to **Project → Project Settings**
-2. Click on the **AutoLoad** tab
-3. Click the folder icon next to Path
-4. Navigate to `scripts/autoload/GameData.gd`
-5. Make sure Node Name says `GameData`
-6. Click **Add**
+## 📁 File Structure
 
-### 3. Create the Scene Structure
-You need to create these scenes in Godot:
+### Core System Files
 
-#### Main.tscn (Main Menu)
-1. Create new scene → Add Node2D as root
-2. Attach script: `scripts/Main.gd`
-3. Save as: `Main.tscn`
+1. **`Unit.swift`** - The foundational Unit class with complete battle mechanics
+2. **`Skill.swift`** - Comprehensive skill system with various effects
+3. **`GameData.swift`** - Data management, templates, and save system
+4. **`BattleSystem.swift`** - Complete battle manager and SpriteKit integration
+5. **`TestBattleDemo.swift`** - Comprehensive testing and demo system
+6. **`ContentView.swift`** - SwiftUI interface for Swift Playgrounds
 
-#### scenes/battle/TestBattle.tscn
-1. Create new scene → Add Node2D as root
-2. Add this structure:
+## 🛠️ Core Features Implemented
+
+### Unit System
+- ✅ Complete stat system (HP, MP, Attack, Defense, Magic, Speed)
+- ✅ Battle state management (current HP/MP, status effects, defending)
+- ✅ Damage calculation with type resistance
+- ✅ Healing and MP restoration
+- ✅ Status effect system with duration tracking
+- ✅ Unit factory for easy creation
+
+### Skill System
+- ✅ Comprehensive skill framework with multiple effect types
+- ✅ MP cost system
+- ✅ Damage, healing, and status effect skills
+- ✅ Target type system (single/all enemies/allies, self)
+- ✅ Skill factory with pre-built abilities for all classes
+
+### Battle System
+- ✅ Turn-based combat with player/enemy phases
+- ✅ Action system (Attack, Skill, Item, Defend)
+- ✅ AI system for enemy behavior
+- ✅ Battle state management
+- ✅ SpriteKit integration with visual feedback
+- ✅ Delegate pattern for UI updates
+
+### Data Management
+- ✅ Template system for units and skills
+- ✅ JSON-ready data structures
+- ✅ Save/load system foundation
+- ✅ Meta-progression tracking
+- ✅ Run data management
+
+## 🎯 Unit Classes Available
+
+### Player Units
+- **Warrior** - High HP/Defense, physical attacks, defensive abilities
+- **Mage** - High MP/Magic, elemental spells, area attacks  
+- **Rogue** - High Speed, critical strikes, debuff abilities
+- **Cleric** - Balanced stats, healing spells, buff abilities
+
+### Enemy Units
+- **Goblin** - Fast, weak enemy with quick attacks
+- **Orc** - Strong, slow enemy with powerful attacks
+- **Skeleton Mage** - Magical enemy with elemental spells
+
+## 🔧 How to Use in Swift Playgrounds
+
+1. **Copy all Swift files** to your Swift Playgrounds project
+2. **Set ContentView as your main view** in App.swift:
+   ```swift
+   import SwiftUI
+
+   @main
+   struct MyApp: App {
+       var body: some Scene {
+           WindowGroup {
+               ContentView()
+           }
+       }
+   }
+   ```
+3. **Run the app** and use the interface to:
+   - Select units for your team
+   - Start battle demos
+   - Run comprehensive tests
+   - View game statistics
+
+## 🧪 Testing System
+
+The project includes comprehensive tests accessible through:
+
+### In-App Testing
+- Tap "Run Unit Tests" in the main interface
+- Check the console output for detailed test results
+
+### Manual Testing
+```swift
+// Run all tests
+TestBattleDemo.runAllTests()
+
+// Run specific test suites
+TestBattleDemo.runBasicUnitTests()
+TestBattleDemo.runBattleSystemTests()
+TestBattleDemo.runGameDataTests()
 ```
-TestBattle (Node2D) [attach scripts/TestBattle.gd]
-├── BattleField (Node2D)
-│   ├── PlayerPositions (Node2D)
-│   │   ├── Position1 (Marker2D) [set position: 200, 300]
-│   │   ├── Position2 (Marker2D) [set position: 200, 400]
-│   │   └── Position3 (Marker2D) [set position: 200, 500]
-│   └── EnemyPositions (Node2D)
-│       ├── Position1 (Marker2D) [set position: 800, 350]
-│       └── Position2 (Marker2D) [set position: 800, 450]
-├── UI (CanvasLayer)
-│   ├── TopBar (Control)
-│   │   ├── EnemyHealthBars (HBoxContainer) [position: 600, 50]
-│   │   └── HeroHealthBars (HBoxContainer) [position: 100, 50]
-│   ├── ActionMenu (PanelContainer) [position: 400, 500]
-│   │   ├── AttackBtn (Button) [text: "Attack"]
-│   │   ├── SpellsBtn (Button) [text: "Spells"]
-│   │   ├── ItemsBtn (Button) [text: "Items"]
-│   │   └── DefendBtn (Button) [text: "Defend"]
-│   ├── CurrentUnitDisplay (PanelContainer) [position: 400, 200]
-│   └── BattleUI (Node) [attach scripts/ui/BattleUI.gd]
-└── BattleManager (Node) [attach scripts/battle/BattleManager.gd]
-```
-3. Save as: `scenes/battle/TestBattle.tscn`
 
-#### scenes/battle/UnitSprite.tscn
-1. Create new scene → Add Node2D as root
-2. Attach script: `scripts/battle/UnitSprite.gd`
-3. Add child nodes:
-   - Sprite2D (name it "Sprite2D")
-   - ProgressBar (name it "HealthBar")
-   - ProgressBar (name it "MPBar")
-4. Save as: `scenes/battle/UnitSprite.tscn`
+## 🎲 Example Usage
 
-### 4. Set Main Scene
-1. Go to **Project → Project Settings → Application → Run**
-2. Set Main Scene to: `Main.tscn`
+### Creating Units
+```swift
+// Using factory methods
+let warrior = UnitFactory.createWarrior(name: "Hero")
+let mage = UnitFactory.createMage(name: "Wizard")
 
-### 5. Run the Game!
-Press F5 or click the Play button!
-
-## 🎮 What's Working
-
-- **Main Menu** with Start/Test Battle options
-- **Turn-based Combat** with player and enemy phases
-- **3 Heroes vs 2 Goblins** test battle
-- **Attack, Spells, Defend** actions
-- **HP/MP System** with visual bars
-- **Mage has Fireball**, **Healer has Heal** spell
-- **Save/Load System** for meta-progression
-- **Experience and Gold** rewards
-
-## 📁 File Structure Created
-
-```
-scripts/
-├── autoload/
-│   └── GameData.gd         ✅ Global game state
-├── resources/
-│   ├── Unit.gd             ✅ Unit/character class
-│   └── Skill.gd            ✅ Skill system
-├── battle/
-│   ├── BattleManager.gd    ✅ Battle logic
-│   └── UnitSprite.gd       ✅ Unit display
-├── ui/
-│   └── BattleUI.gd         ✅ UI controller
-├── TestBattle.gd           ✅ Test battle setup
-└── Main.gd                 ✅ Main menu
+// Using GameData templates
+let goblin = GameData.shared.createUnit(from: "goblin")
 ```
 
-## 🐛 Troubleshooting
+### Battle System
+```swift
+let battleManager = BattleManager()
+battleManager.delegate = self // Implement BattleManagerDelegate
 
-If you see errors about GameData:
-- Make sure you added GameData.gd as an Autoload (Step 2)
-- Reload the project after adding the Autoload
+let playerTeam = [warrior, mage]
+let enemyTeam = [goblin, orc]
 
-If scenes don't load:
-- Make sure you created and saved the scene files (Step 3)
-- Check that scene paths match in the scripts
+battleManager.startBattle(playerTeam: playerTeam, enemyTeam: enemyTeam)
+```
 
-## 🚀 Next Steps
+### Using Skills
+```swift
+let firebolt = SkillFactory.createFirebolt()
+let canUse = firebolt.canUse(by: mage)
 
-1. **Add Sprites**: Replace placeholder squares with actual art
-2. **Create More Units**: Design different heroes and enemies
-3. **Add Skills**: Create more abilities with different effects
-4. **Map System**: Implement Slay the Spire-style path selection
-5. **Shop System**: Add items and upgrades between battles
-6. **Unit Selection**: Pick enemy units after victory
+if canUse {
+    let success = mage.useSkill(firebolt, on: [goblin])
+}
+```
 
-The foundation is solid - start building your game! 🎮
+## 🔄 Next Development Steps
+
+1. **Map System** - Implement Slay the Spire style path selection
+2. **Item System** - Add consumables and equipment
+3. **UI Polish** - Enhanced battle interface and animations
+4. **More Content** - Additional units, skills, and encounters
+5. **Persistence** - Full JSON save/load implementation
+6. **Balance** - Fine-tune combat mathematics
+
+## 📊 System Architecture
+
+```
+GameData (Singleton)
+├── Unit Templates
+├── Skill Templates  
+├── Encounter Templates
+├── Meta Progression
+└── Current Run Data
+
+BattleManager
+├── Battle State
+├── Unit Management
+├── Action Processing
+├── AI System
+└── SpriteKit Integration
+
+Unit System
+├── Base Stats
+├── Current Stats
+├── Skills
+├── Status Effects
+└── Battle Actions
+```
+
+## 🎮 Combat Flow
+
+1. **Battle Start** - Initialize units, calculate rewards
+2. **Player Phase** - Each player unit can act
+3. **Enemy Phase** - AI controls enemy actions
+4. **Status Processing** - Handle ongoing effects
+5. **Victory Check** - Determine battle outcome
+6. **Rewards** - Apply EXP, gold, and progression
+
+## 💡 Design Philosophy
+
+- **Modular Architecture** - Each system is independent and testable
+- **Data-Driven** - Game content defined in templates, not code
+- **Touch-Friendly** - Designed specifically for iPad interaction
+- **Performance-First** - Efficient algorithms suitable for mobile
+- **Extensible** - Easy to add new units, skills, and mechanics
+
+## 🚀 Ready to Build
+
+This foundation provides everything needed to start building your roguelike JRPG:
+
+- Complete battle system with AI
+- Flexible unit and skill framework  
+- Data management and persistence
+- Testing and debugging tools
+- SwiftUI interface ready for expansion
+
+Copy the files to Swift Playgrounds and start building your adventure! 🎉
