@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://b8kxwxr3yc7vq"]
 
-[ext_resource type="Script" path="res://scripts/battle/BattleManager.gd" id="1_1"]
-[ext_resource type="Script" path="res://scripts/ui/BattleUI.gd" id="2_1"]
+[ext_resource type="Script" uid="uid://ck8y820ews7rf" path="res://scripts/battle/BattleManager.gd" id="1_1"]
+[ext_resource type="Script" uid="uid://cgk1ljr67qs01" path="res://scripts/ui/BattleUI.gd" id="2_1"]
 
 [node name="BattleScene" type="Node2D"]
 
@@ -58,14 +58,12 @@ alignment = 2
 
 [node name="PlayerHealthBars" type="HBoxContainer" parent="UI/TopBar"]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 650.0
 offset_bottom = 90.0
 
 [node name="ActionMenu" type="PanelContainer" parent="UI"]
-layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -98,7 +96,6 @@ layout_mode = 2
 text = "Defend"
 
 [node name="CurrentUnitDisplay" type="PanelContainer" parent="UI"]
-layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5

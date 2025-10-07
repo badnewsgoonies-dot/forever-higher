@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://test_battle_001"]
+[gd_scene load_steps=3 format=3 uid="uid://test_battle_001"]
 
 [ext_resource type="Script" path="res://scripts/TestBattle.gd" id="1_1"]
+[ext_resource type="Script" path="res://scripts/battle/BattleManager.gd" id="2_1"]
 
 [node name="TestBattle" type="Node2D"]
 script = ExtResource("1_1")
@@ -109,3 +110,4 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="BattleManager" type="Node" parent="."]
+script = ExtResource("2_1")

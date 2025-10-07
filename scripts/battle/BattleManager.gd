@@ -9,7 +9,10 @@ signal unit_defeated(unit: Unit)
 
 @onready var player_positions = $"../BattleField/PlayerPositions"
 @onready var enemy_positions = $"../BattleField/EnemyPositions"
-@onready var battle_ui = $"../UI/BattleUI"
+@onready var action_menu = $"../UI/ActionMenu" if has_node("../UI/ActionMenu") else null
+@onready var current_unit_label = $"../UI/CurrentUnitDisplay/Label" if has_node("../UI/CurrentUnitDisplay/Label") else null
+@onready var player_health_bars = $"../UI/TopBar/HeroHealthBars" if has_node("../UI/TopBar/HeroHealthBars") else null
+@onready var enemy_health_bars = $"../UI/TopBar/EnemyHealthBars" if has_node("../UI/TopBar/EnemyHealthBars") else null
 
 var state: GameData.BattleState = GameData.BattleState.PLAYER_TURN
 var player_units: Array[Unit] = []
@@ -27,8 +30,14 @@ var battle_rewards: Dictionary = {
 }
 
 func _ready():
-	if battle_ui:
-		battle_ui.action_selected.connect(_on_action_selected)
+	# Connect action menu buttons if they exist
+	if action_menu:
+		var attack_btn = action_menu.get_node_or_null("VBoxContainer/AttackBtn")
+		var defend_btn = action_menu.get_node_or_null("VBoxContainer/DefendBtn")
+		if attack_btn:
+			attack_btn.pressed.connect(_on_attack_pressed)
+		if defend_btn:
+			defend_btn.pressed.connect(_on_defend_pressed)
 func start_battle(heroes: Array, enemies: Array):
 	player_units = heroes
 	enemy_units = enemies
@@ -46,9 +55,12 @@ func start_battle(heroes: Array, enemies: Array):
 	# Spawn unit sprites
 	spawn_units()
 	
-	# Update UI
-	if battle_ui:
-		battle_ui.setup_battle(player_units, enemy_units)
+	# Update UI - create simple health display
+	print("Battle started: %d heroes vs %d enemies" % [player_units.size(), enemy_units.size()])
+	for unit in player_units:
+		print("  Hero: %s (HP: %d/%d, MP: %d/%d)" % [unit.unit_name, unit.current_hp, unit.max_hp, unit.current_mp, unit.max_mp])
+	for unit in enemy_units:
+		print("  Enemy: %s (HP: %d/%d)" % [unit.unit_name, unit.current_hp, unit.max_hp])
 	
 	# Start player phase
 	await get_tree().process_frame
@@ -106,8 +118,8 @@ func start_enemy_phase():
 	
 	phase_changed.emit(false)
 	
-	if battle_ui:
-		battle_ui.hide_action_menu()
+	if action_menu:
+		action_menu.hide()
 	
 	await get_tree().create_timer(0.5).timeout
 	process_enemy_turns()
@@ -122,8 +134,13 @@ func select_next_unit():
 	var current_unit = alive_units[current_unit_index]
 	unit_turn_started.emit(current_unit)
 	
-	if battle_ui:
-		battle_ui.show_action_menu(current_unit)
+	if action_menu:
+		action_menu.show()
+	if current_unit_label:
+		current_unit_label.text = "%s's Turn" % current_unit.unit_name
+
+	print("\n=== %s's Turn ===" % current_unit.unit_name)
+	print("HP: %d/%d | MP: %d/%d" % [current_unit.current_hp, current_unit.max_hp, current_unit.current_mp, current_unit.max_mp])
 	
 	# Highlight current unit
 	highlight_current_unit(current_unit)
@@ -169,10 +186,8 @@ func execute_attack(attacker: Unit, target: Unit):
 	var damage = target.take_damage(attacker.attack, GameData.DamageType.PHYSICAL)
 	damage_dealt.emit(target, damage)
 	
-	# Update UI
-	if battle_ui:
-		battle_ui.show_damage(target, damage)
-		battle_ui.update_health_bars()
+	# Update UI via console
+	print("%s attacks %s for %d damage! (%d HP remaining)" % [attacker.unit_name, target.unit_name, damage, target.current_hp])
 	
 	# Play animation on sprites
 	var attacker_sprite = get_unit_sprite(attacker)
@@ -208,14 +223,12 @@ func execute_skill(caster: Unit, skill: Skill, targets: Array):
 			var actual_damage = target.take_damage(damage, skill.damage_type)
 			damage_dealt.emit(target, actual_damage)
 			
-			if battle_ui:
-				battle_ui.show_damage(target, actual_damage)        
+			print("%s uses %s on %s for %d damage! (%d HP remaining)" % [caster.unit_name, skill.skill_name, target.unit_name, actual_damage, target.current_hp])        
 		if skill.heal_power > 0:  # Healing skill
 			var heal = skill.get_heal_amount(caster)
 			var actual_heal = target.heal(heal)
 			
-			if battle_ui:
-				battle_ui.show_heal(target, actual_heal)
+			print("%s uses %s on %s, healing for %d! (%d HP)" % [caster.unit_name, skill.skill_name, target.unit_name, actual_heal, target.current_hp])
 		
 		if skill.status_effect != "":
 			target.apply_status_effect(skill.status_effect, skill.status_duration)
@@ -223,8 +236,7 @@ func execute_skill(caster: Unit, skill: Skill, targets: Array):
 		if not target.is_alive():
 			unit_defeated.emit(target)
 	
-	if battle_ui:
-		battle_ui.update_health_bars()
+	# Health bars would update here if we had UI
 	
 	state = GameData.BattleState.PLAYER_TURN if is_player_phase else GameData.BattleState.ENEMY_TURN
 
@@ -311,6 +323,33 @@ func get_skill_targets(skill: Skill, caster: Unit, is_player: bool) -> Array:
 	return targets
 
 # Signal handlers
+func _on_attack_pressed():
+	var alive_units = get_alive_player_units()
+	if current_unit_index >= alive_units.size():
+		return
+
+	var current_unit = alive_units[current_unit_index]
+	var targets = get_alive_enemy_units()
+
+	if targets.size() > 0:
+		# Simple auto-target first enemy for now
+		execute_attack(current_unit, targets[0])
+		if action_menu:
+			action_menu.hide()
+		current_unit_index += 1
+		await get_tree().create_timer(0.5).timeout
+		select_next_unit()
+
+func _on_defend_pressed():
+	var alive_units = get_alive_player_units()
+	if current_unit_index >= alive_units.size():
+		return
+
+	var current_unit = alive_units[current_unit_index]
+	execute_defend(current_unit)
+	if action_menu:
+		action_menu.hide()
+
 func _on_action_selected(action: String, data = null):
 	var alive_units = get_alive_player_units()
 	if current_unit_index >= alive_units.size():
