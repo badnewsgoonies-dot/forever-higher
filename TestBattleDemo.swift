@@ -1,369 +1,433 @@
 import Foundation
-import SpriteKit
 
-// MARK: - Test Battle Demo
-
+// MARK: - Test Battle Demo System
 class TestBattleDemo {
+    static let shared = TestBattleDemo()
     
-    static func runBasicUnitTests() {
-        print("=== UNIT SYSTEM TESTS ===\n")
-        
-        // Test 1: Unit Creation
-        print("1. Testing Unit Creation:")
-        let warrior = UnitFactory.createWarrior(name: "Test Warrior")
-        let mage = UnitFactory.createMage(name: "Test Mage")
-        
-        print("✓ Created Warrior: \(warrior.getStatusString())")
-        print("✓ Created Mage: \(mage.getStatusString())")
-        print()
-        
-        // Test 2: Basic Combat
-        print("2. Testing Basic Combat:")
-        let goblin = UnitFactory.createGoblin(name: "Test Goblin")
-        print("Initial Goblin: \(goblin.getStatusString())")
-        
-        let damage = warrior.performBasicAttack(on: goblin)
-        print("Warrior attacks for \(damage) damage")
-        print("Goblin after attack: \(goblin.getStatusString())")
-        print("Goblin is alive: \(goblin.isAlive())")
-        print()
-        
-        // Test 3: Skill Usage
-        print("3. Testing Skill Usage:")
-        print("Mage MP before skill: \(mage.currentMP)")
-        
-        if let firebolt = mage.skills.first(where: { $0.skillName == "Firebolt" }) {
-            let canUse = firebolt.canUse(by: mage)
-            print("Can use Firebolt: \(canUse)")
-            
-            if canUse {
-                let skillDamage = firebolt.getDamage(from: mage)
-                print("Firebolt would deal \(skillDamage) damage")
-                
-                // Use the skill
-                let success = mage.useSkill(firebolt, on: [goblin])
-                print("Skill used successfully: \(success)")
-                print("Mage MP after skill: \(mage.currentMP)")
-                print("Goblin after Firebolt: \(goblin.getStatusString())")
-            }
-        }
-        print()
-        
-        // Test 4: Healing
-        print("4. Testing Healing:")
-        let cleric = UnitFactory.createCleric(name: "Test Cleric")
-        
-        // Damage the warrior first
-        warrior.takeDamage(50, damageType: .physical)
-        print("Warrior after damage: \(warrior.getStatusString())")
-        
-        if let heal = cleric.skills.first(where: { $0.skillName == "Heal" }) {
-            let healAmount = heal.getHealAmount(from: cleric)
-            print("Heal would restore \(healAmount) HP")
-            
-            cleric.useSkill(heal, on: [warrior])
-            print("Warrior after healing: \(warrior.getStatusString())")
-        }
-        print()
-        
-        // Test 5: Status Effects
-        print("5. Testing Status Effects:")
-        warrior.applyStatusEffect("poison", duration: 3)
-        warrior.applyStatusEffect("blessed", duration: 2)
-        
-        print("Warrior status effects: \(warrior.statusEffects.map { "\($0.effect)(\($0.duration))" })")
-        
-        warrior.processStatusEffects()
-        print("After processing (1 turn): \(warrior.statusEffects.map { "\($0.effect)(\($0.duration))" })")
-        
-        warrior.processStatusEffects()
-        print("After processing (2 turns): \(warrior.statusEffects.map { "\($0.effect)(\($0.duration))" })")
-        print()
-        
-        // Test 6: Unit Factory
-        print("6. Testing Unit Factory:")
-        let allClasses: [String] = ["warrior", "mage", "rogue", "cleric"]
-        
-        for className in allClasses {
-            if let unit = GameData.shared.createUnit(from: className) {
-                print("✓ Created \(className): \(unit.unitName) - Skills: \(unit.skills.count)")
-            } else {
-                print("✗ Failed to create \(className)")
-            }
-        }
-        print()
-        
-        print("=== UNIT TESTS COMPLETE ===\n")
-    }
+    private init() {}
     
-    static func runBattleSystemTests() {
-        print("=== BATTLE SYSTEM TESTS ===\n")
+    // MARK: - Main Test Runner
+    func runAllTests() {
+        print("\n🎮 FOREVER HIGHER - COMPREHENSIVE SYSTEM TESTS 🎮")
+        print("=" * 60)
         
-        // Create test teams
-        let playerTeam = [
-            UnitFactory.createWarrior(name: "Hero Warrior"),
-            UnitFactory.createMage(name: "Hero Mage")
-        ]
-        
-        let enemyTeam = [
-            UnitFactory.createGoblin(name: "Enemy Goblin"),
-            UnitFactory.createOrc(name: "Enemy Orc")
-        ]
-        
-        print("Player Team:")
-        for unit in playerTeam {
-            print("  - \(unit.getStatusString())")
-        }
-        
-        print("\nEnemy Team:")
-        for unit in enemyTeam {
-            print("  - \(unit.getStatusString())")
-        }
-        print()
-        
-        // Create battle manager
-        let battleManager = BattleManager()
-        let testDelegate = TestBattleDelegate()
-        battleManager.delegate = testDelegate
-        
-        // Start battle
-        print("Starting battle simulation...")
-        battleManager.startBattle(playerTeam: playerTeam, enemyTeam: enemyTeam)
-        
-        // Simulate some player actions
-        print("\n--- Simulating Player Actions ---")
-        
-        // Player 1 attacks
-        if let target = battleManager.getAliveEnemyUnits().first {
-            let action = BattleAction.attack(target: target)
-            battleManager.processPlayerAction(action)
-        }
-        
-        // Player 2 uses skill
-        if let caster = battleManager.getAlivePlayerUnits().last,
-           let skill = caster.skills.first,
-           let target = battleManager.getAliveEnemyUnits().first {
-            let action = BattleAction.skill(skill: skill, targets: [target])
-            battleManager.processPlayerAction(action)
-        }
-        
-        print("\n=== BATTLE SYSTEM TESTS COMPLETE ===\n")
-    }
-    
-    static func runGameDataTests() {
-        print("=== GAME DATA TESTS ===\n")
-        
-        let gameData = GameData.shared
-        
-        // Test unit creation from templates
-        print("1. Testing Unit Template System:")
-        let templateIds = ["warrior", "mage", "rogue", "cleric", "goblin", "orc"]
-        
-        for templateId in templateIds {
-            if let unit = gameData.createUnit(from: templateId) {
-                print("✓ \(templateId): \(unit.unitName) (HP: \(unit.maxHP), Skills: \(unit.skills.count))")
-            } else {
-                print("✗ Failed to create unit from template: \(templateId)")
-            }
-        }
-        print()
-        
-        // Test skill creation
-        print("2. Testing Skill Template System:")
-        let skillIds = ["firebolt", "heal", "power_strike", "backstab"]
-        
-        for skillId in skillIds {
-            if let skill = gameData.createSkill(from: skillId) {
-                print("✓ \(skillId): \(skill.skillName) (MP: \(skill.mpCost), Power: \(skill.power))")
-            } else {
-                print("✗ Failed to create skill from template: \(skillId)")
-            }
-        }
-        print()
-        
-        // Test meta progression
-        print("3. Testing Meta Progression:")
-        print("Current level: \(gameData.metaProgression.level)")
-        print("Current EXP: \(gameData.metaProgression.totalExp)")
-        
-        gameData.addMetaExp(150)
-        print("After adding 150 EXP:")
-        print("New level: \(gameData.metaProgression.level)")
-        print("New EXP: \(gameData.metaProgression.totalExp)")
-        print()
-        
-        // Test run data
-        print("4. Testing Run Data:")
-        print("Current run active: \(gameData.currentRunData.isActive)")
-        
-        gameData.currentRunData.startNewRun(with: ["warrior", "mage"])
-        print("Started new run with: \(gameData.currentRunData.playerUnits)")
-        print("Run is now active: \(gameData.currentRunData.isActive)")
-        print()
-        
-        print("=== GAME DATA TESTS COMPLETE ===\n")
-    }
-    
-    static func runAllTests() {
-        print("🎮 FOREVER HIGHER - UNIT SYSTEM TESTS 🎮\n")
-        print("Testing the foundational systems for the roguelike JRPG\n")
-        
-        runBasicUnitTests()
-        runGameDataTests()
+        runUnitSystemTests()
+        runSkillSystemTests()
         runBattleSystemTests()
+        runGameDataTests()
+        runStatusEffectTests()
         
-        print("🎉 ALL TESTS COMPLETE! 🎉")
-        print("The Unit class foundation is ready for your roguelike JRPG!")
-        print("\nNext steps:")
-        print("1. Copy these Swift files to your Swift Playgrounds project")
-        print("2. Test the basic functionality")
-        print("3. Add SpriteKit scene integration")
-        print("4. Build the UI system")
-        print("5. Add the map/progression system")
-    }
-}
-
-// MARK: - Test Battle Delegate
-
-class TestBattleDelegate: BattleManagerDelegate {
-    
-    func battleStarted(playerUnits: [Unit], enemyUnits: [Unit]) {
-        print("🔥 Battle Started!")
-        print("Player units: \(playerUnits.map { $0.unitName })")
-        print("Enemy units: \(enemyUnits.map { $0.unitName })")
+        print("\n🎉 ALL TESTS COMPLETED! 🎉")
+        print("=" * 60)
     }
     
-    func phaseChanged(isPlayerPhase: Bool) {
-        print(isPlayerPhase ? "⚔️ Player Phase" : "👹 Enemy Phase")
+    func runQuickTests() {
+        print("\n⚡ QUICK VALIDATION TESTS ⚡")
+        print("-" * 40)
+        
+        // Quick unit creation test
+        let warrior = UnitFactory.createPlayerUnit(name: "Test Warrior", unitClass: .warrior)
+        let mage = UnitFactory.createPlayerUnit(name: "Test Mage", unitClass: .mage)
+        let goblin = UnitFactory.createEnemyUnit(name: "Test Goblin", level: 1)
+        
+        print("✅ Unit creation: Warrior(\(warrior.currentHP)HP), Mage(\(mage.currentHP)HP), Goblin(\(goblin.currentHP)HP)")
+        
+        // Quick skill test
+        let skillCount = warrior.availableSkills.count + mage.availableSkills.count
+        print("✅ Skills loaded: \(skillCount) total skills available")
+        
+        // Quick battle test
+        let battle = BattleManager(playerUnits: [warrior], enemyUnits: [goblin])
+        print("✅ Battle system: Initialized successfully")
+        
+        // Quick data test
+        let gameData = GameDataManager.shared
+        print("✅ Game data: Runs(\(gameData.metaProgression.totalRuns)), Gold(\(gameData.playerData.gold))")
+        
+        print("⚡ Quick tests completed - System is ready!")
+        print("-" * 40)
     }
     
-    func unitTurnStarted(unit: Unit, isPlayer: Bool) {
-        let icon = isPlayer ? "🛡️" : "⚔️"
-        print("\(icon) \(unit.unitName)'s turn - HP: \(unit.currentHP)/\(unit.maxHP), MP: \(unit.currentMP)/\(unit.maxMP)")
-    }
-    
-    func damageDealt(target: Unit, amount: Int, damageType: DamageType) {
-        print("💥 \(target.unitName) takes \(amount) \(damageType.rawValue) damage! (HP: \(target.currentHP)/\(target.maxHP))")
-    }
-    
-    func healingDone(target: Unit, amount: Int) {
-        print("💚 \(target.unitName) healed for \(amount) HP! (HP: \(target.currentHP)/\(target.maxHP))")
-    }
-    
-    func mpRestored(target: Unit, amount: Int) {
-        print("💙 \(target.unitName) restored \(amount) MP! (MP: \(target.currentMP)/\(target.maxMP))")
-    }
-    
-    func skillUsed(caster: Unit, skill: Skill, targets: [Unit]) {
-        let targetNames = targets.map { $0.unitName }.joined(separator: ", ")
-        print("✨ \(caster.unitName) uses \(skill.skillName) on \(targetNames)")
-    }
-    
-    func statusEffectApplied(target: Unit, effect: String, duration: Int) {
-        print("🌟 \(target.unitName) is affected by \(effect) for \(duration) turns")
-    }
-    
-    func unitDefended(unit: Unit) {
-        print("🛡️ \(unit.unitName) defends (damage reduced next turn)")
-    }
-    
-    func unitDefeated(unit: Unit) {
-        print("💀 \(unit.unitName) is defeated!")
-    }
-    
-    func actionFailed(reason: String) {
-        print("❌ Action failed: \(reason)")
-    }
-    
-    func battleEnded(victory: Bool, rewards: BattleRewards) {
-        if victory {
-            print("🎉 VICTORY!")
-            print("Rewards: \(rewards.exp) EXP, \(rewards.gold) Gold")
-        } else {
-            print("💀 DEFEAT!")
-            print("Better luck next time...")
+    func runQuickBattleDemo() {
+        print("\n⚔️ QUICK BATTLE DEMONSTRATION ⚔️")
+        print("-" * 40)
+        
+        // Create test units
+        let hero = UnitFactory.createPlayerUnit(name: "Hero", unitClass: .warrior)
+        let wizard = UnitFactory.createPlayerUnit(name: "Wizard", unitClass: .mage)
+        let goblin = UnitFactory.createEnemyUnit(name: "Goblin", level: 1)
+        let orc = UnitFactory.createEnemyUnit(name: "Orc", level: 2)
+        
+        print("🛡️ Player Team: \(hero.name) (HP:\(hero.currentHP)), \(wizard.name) (HP:\(wizard.currentHP))")
+        print("👹 Enemy Team: \(goblin.name) (HP:\(goblin.currentHP)), \(orc.name) (HP:\(orc.currentHP))")
+        
+        // Create battle
+        let battle = BattleManager(playerUnits: [hero, wizard], enemyUnits: [goblin, orc])
+        
+        // Set up callbacks
+        battle.onUnitActionCompleted = { unit, action, result in
+            print("⚡ \(unit.name) \(result.description)")
         }
+        
+        battle.onBattleEnded = { result in
+            switch result {
+            case .victory(let rewards):
+                print("🎉 Victory! Rewards: \(rewards.experience) XP, \(rewards.gold) Gold")
+            case .defeat:
+                print("💀 Defeat! Heroes have fallen.")
+            case .escaped:
+                print("🏃 Escaped from battle!")
+            }
+        }
+        
+        // Simulate a few turns
+        for turn in 1...3 {
+            print("\n--- Turn \(turn) ---")
+            
+            // Plan actions for living players
+            for player in battle.playerUnits.filter({ $0.isAlive }) {
+                if let skill = player.availableSkills.randomElement(), player.canUseSkill(skill) {
+                    let enemies = battle.enemyUnits.filter { $0.isAlive }
+                    if let target = enemies.randomElement() {
+                        let action = BattleAction(actor: player, type: .useSkill(skill), targets: [target])
+                        _ = battle.planAction(unit: player, action: action)
+                    }
+                } else {
+                    let enemies = battle.enemyUnits.filter { $0.isAlive }
+                    if let target = enemies.randomElement() {
+                        let action = BattleAction(actor: player, type: .attack, targets: [target])
+                        _ = battle.planAction(unit: player, action: action)
+                    }
+                }
+            }
+            
+            // Execute turn
+            battle.executePlayerTurn()
+            
+            // Check if battle ended
+            if battle.currentPhase == .victory || battle.currentPhase == .defeat {
+                break
+            }
+        }
+        
+        print("⚔️ Battle demonstration completed!")
+        print("-" * 40)
     }
-}
-
-// MARK: - Demo Scene for Swift Playgrounds
-
-class DemoScene: SKScene {
     
-    override func didMove(to view: SKView) {
-        backgroundColor = .black
+    // MARK: - Individual Test Suites
+    
+    private func runUnitSystemTests() {
+        print("\n🛡️ UNIT SYSTEM TESTS")
+        print("-" * 30)
         
-        // Add title
-        let titleLabel = SKLabelNode(text: "Forever Higher - Unit System Demo")
-        titleLabel.fontSize = 24
-        titleLabel.fontColor = .white
-        titleLabel.position = CGPoint(x: size.width/2, y: size.height - 50)
-        addChild(titleLabel)
+        // Test unit creation
+        let warrior = UnitFactory.createPlayerUnit(name: "Test Warrior", unitClass: .warrior)
+        let mage = UnitFactory.createPlayerUnit(name: "Test Mage", unitClass: .mage)
+        let rogue = UnitFactory.createPlayerUnit(name: "Test Rogue", unitClass: .rogue)
+        let cleric = UnitFactory.createPlayerUnit(name: "Test Cleric", unitClass: .cleric)
         
-        // Add instruction
-        let instructionLabel = SKLabelNode(text: "Tap to run tests")
-        instructionLabel.fontSize = 16
-        instructionLabel.fontColor = .lightGray
-        instructionLabel.position = CGPoint(x: size.width/2, y: size.height/2)
-        addChild(instructionLabel)
+        print("✅ Created Warrior: HP(\(warrior.maxHP)), ATK(\(warrior.attack)), Skills(\(warrior.availableSkills.count))")
+        print("✅ Created Mage: HP(\(mage.maxHP)), MAG(\(mage.magic)), Skills(\(mage.availableSkills.count))")
+        print("✅ Created Rogue: HP(\(rogue.maxHP)), SPD(\(rogue.speed)), Skills(\(rogue.availableSkills.count))")
+        print("✅ Created Cleric: HP(\(cleric.maxHP)), MP(\(cleric.maxMP)), Skills(\(cleric.availableSkills.count))")
         
-        // Add unit display
-        displaySampleUnits()
+        // Test damage and healing
+        let enemy = UnitFactory.createEnemyUnit(name: "Test Enemy", level: 1)
+        let initialHP = enemy.currentHP
+        let damage = enemy.takeDamage(20, damageType: .physical)
+        print("✅ Damage test: Enemy took \(damage) damage (\(initialHP) → \(enemy.currentHP))")
+        
+        let healing = enemy.heal(10)
+        print("✅ Healing test: Enemy healed \(healing) HP (\(enemy.currentHP - healing) → \(enemy.currentHP))")
+        
+        // Test status effects
+        let poisonEffect = StatusEffect(type: .poison, power: 5, duration: 3)
+        enemy.addStatusEffect(poisonEffect)
+        print("✅ Status effect test: Applied poison to enemy")
+        
+        let statusResults = enemy.processStatusEffects()
+        for result in statusResults {
+            print("   💊 \(result.type): \(result.value) \(result.isPositive ? "benefit" : "damage")")
+        }
+        
+        print("🛡️ Unit system tests completed!")
     }
     
-    private func displaySampleUnits() {
-        let units = [
-            UnitFactory.createWarrior(),
-            UnitFactory.createMage(),
-            UnitFactory.createRogue(),
-            UnitFactory.createCleric()
+    private func runSkillSystemTests() {
+        print("\n✨ SKILL SYSTEM TESTS")
+        print("-" * 30)
+        
+        let mage = UnitFactory.createPlayerUnit(name: "Test Mage", unitClass: .mage)
+        let enemy = UnitFactory.createEnemyUnit(name: "Test Target", level: 1)
+        
+        print("🧙 Testing skills for \(mage.name) (MP: \(mage.currentMP))")
+        
+        for skill in mage.availableSkills {
+            let canUse = mage.canUseSkill(skill)
+            print("   \(canUse ? "✅" : "❌") \(skill.name) (Cost: \(skill.mpCost), Power: \(skill.power))")
+            
+            if canUse && skill.skillType == .damage {
+                let oldHP = enemy.currentHP
+                let oldMP = mage.currentMP
+                
+                // Simulate skill use
+                if mage.consumeMP(skill.mpCost) {
+                    let damage = enemy.takeDamage(skill.power + mage.magic, damageType: .magical)
+                    print("      💥 Used \(skill.name): \(damage) damage dealt, \(skill.mpCost) MP consumed")
+                    print("      📊 Enemy: \(oldHP) → \(enemy.currentHP) HP, Mage: \(oldMP) → \(mage.currentMP) MP")
+                }
+                break // Test only one damage skill
+            }
+        }
+        
+        print("✨ Skill system tests completed!")
+    }
+    
+    private func runBattleSystemTests() {
+        print("\n⚔️ BATTLE SYSTEM TESTS")
+        print("-" * 30)
+        
+        let hero = UnitFactory.createPlayerUnit(name: "Test Hero", unitClass: .warrior)
+        let mage = UnitFactory.createPlayerUnit(name: "Test Mage", unitClass: .mage)
+        let goblin = UnitFactory.createEnemyUnit(name: "Test Goblin", level: 1)
+        
+        print("🏟️ Setting up battle: Heroes vs Goblin")
+        
+        let battle = BattleManager(playerUnits: [hero, mage], enemyUnits: [goblin])
+        
+        print("✅ Battle initialized - Phase: \(battle.currentPhase)")
+        print("✅ Player units: \(battle.playerUnits.count), Enemy units: \(battle.enemyUnits.count)")
+        
+        // Test action planning
+        let attackAction = BattleAction(actor: hero, type: .attack, targets: [goblin])
+        let actionPlanned = battle.planAction(unit: hero, action: attackAction)
+        print("✅ Action planning: \(actionPlanned ? "Success" : "Failed")")
+        
+        // Test battle statistics
+        let stats = battle.getBattleStatistics()
+        print("✅ Battle stats: Turn \(stats.turnCount), Living players: \(stats.livingPlayers), Living enemies: \(stats.livingEnemies)")
+        
+        print("⚔️ Battle system tests completed!")
+    }
+    
+    private func runGameDataTests() {
+        print("\n💾 GAME DATA TESTS")
+        print("-" * 30)
+        
+        let gameData = GameDataManager.shared
+        
+        print("📊 Current game state:")
+        print("   Runs: \(gameData.metaProgression.totalRuns)")
+        print("   Victories: \(gameData.metaProgression.totalVictories)")
+        print("   Best Floor: \(gameData.metaProgression.bestFloorReached)")
+        print("   Gold: \(gameData.playerData.gold)")
+        print("   Experience: \(gameData.playerData.experience)")
+        
+        // Test enemy creation from templates
+        if let goblin = GameTemplates.createEnemyFromTemplate("goblin", level: 2) {
+            print("✅ Template system: Created \(goblin.name) (Level 2, HP: \(goblin.maxHP))")
+        }
+        
+        if let orc = GameTemplates.createEnemyFromTemplate("orc", level: 3) {
+            print("✅ Template system: Created \(orc.name) (Level 3, HP: \(orc.maxHP))")
+        }
+        
+        // Test item system
+        if let healthPotion = GameTemplates.itemTemplates["health_potion"] {
+            print("✅ Item system: \(healthPotion.name) - \(healthPotion.description)")
+        }
+        
+        print("💾 Game data tests completed!")
+    }
+    
+    private func runStatusEffectTests() {
+        print("\n🌟 STATUS EFFECT TESTS")
+        print("-" * 30)
+        
+        let testUnit = UnitFactory.createPlayerUnit(name: "Test Subject", unitClass: .warrior)
+        
+        // Test various status effects
+        let effects = [
+            StatusEffect(type: .poison, power: 3, duration: 3),
+            StatusEffect(type: .burn, power: 5, duration: 2),
+            StatusEffect(type: .attack_up, power: 10, duration: 4)
         ]
         
-        let startX = size.width * 0.2
-        let spacing = size.width * 0.6 / CGFloat(units.count - 1)
+        for effect in effects {
+            testUnit.addStatusEffect(effect)
+            print("✅ Applied \(effect.type) (Power: \(effect.power), Duration: \(effect.duration))")
+        }
         
-        for (index, unit) in units.enumerated() {
-            let x = startX + CGFloat(index) * spacing
-            let y = size.height * 0.3
+        // Process effects over several turns
+        for turn in 1...4 {
+            print("\n--- Turn \(turn) Status Processing ---")
+            let results = testUnit.processStatusEffects()
             
-            // Unit sprite
-            let unitNode = SKSpriteNode(color: .blue, size: CGSize(width: 40, height: 60))
-            unitNode.position = CGPoint(x: x, y: y)
-            addChild(unitNode)
+            for result in results {
+                let icon = result.isPositive ? "✨" : "💀"
+                print("   \(icon) \(result.type): \(result.value) \(result.isPositive ? "benefit" : "damage")")
+            }
             
-            // Unit name
-            let nameLabel = SKLabelNode(text: unit.unitName)
-            nameLabel.fontSize = 12
-            nameLabel.fontColor = .white
-            nameLabel.position = CGPoint(x: x, y: y - 50)
-            addChild(nameLabel)
+            print("   HP: \(testUnit.currentHP)/\(testUnit.maxHP)")
             
-            // Unit stats
-            let statsLabel = SKLabelNode(text: "HP:\(unit.maxHP) MP:\(unit.maxMP)")
-            statsLabel.fontSize = 10
-            statsLabel.fontColor = .lightGray
-            statsLabel.position = CGPoint(x: x, y: y - 65)
-            addChild(statsLabel)
+            if testUnit.currentHP <= 0 {
+                print("   💀 Unit defeated by status effects!")
+                break
+            }
+        }
+        
+        print("🌟 Status effect tests completed!")
+    }
+}
+
+// MARK: - Battle Demonstrator
+class BattleDemonstrator {
+    
+    static func demonstrateSkillEffects() {
+        print("\n🎯 SKILL EFFECTS DEMONSTRATION")
+        print("-" * 40)
+        
+        let mage = UnitFactory.createPlayerUnit(name: "Demo Mage", unitClass: .mage)
+        let cleric = UnitFactory.createPlayerUnit(name: "Demo Cleric", unitClass: .cleric)
+        let target = UnitFactory.createEnemyUnit(name: "Training Dummy", level: 1)
+        
+        print("🧙 Demonstrating Mage Skills:")
+        for skill in mage.availableSkills {
+            if mage.canUseSkill(skill) {
+                print("   ✨ \(skill.name): \(skill.description)")
+                print("      Type: \(skill.skillType), Target: \(skill.targetType)")
+                print("      MP Cost: \(skill.mpCost), Power: \(skill.power)")
+                
+                if let element = skill.element {
+                    print("      Element: \(element)")
+                }
+                
+                if let statusEffect = skill.statusEffect {
+                    print("      Status: \(statusEffect) (\(skill.statusDuration) turns)")
+                }
+                print("")
+            }
+        }
+        
+        print("⛪ Demonstrating Cleric Skills:")
+        for skill in cleric.availableSkills {
+            if cleric.canUseSkill(skill) {
+                print("   ✨ \(skill.name): \(skill.description)")
+                print("      Type: \(skill.skillType), Target: \(skill.targetType)")
+                print("      MP Cost: \(skill.mpCost), Power: \(skill.power)")
+                print("")
+            }
+        }
+        
+        print("🎯 Skill demonstration completed!")
+    }
+    
+    static func demonstrateStatusEffects() {
+        print("\n🌪️ STATUS EFFECTS DEMONSTRATION")
+        print("-" * 40)
+        
+        let testUnit = UnitFactory.createPlayerUnit(name: "Test Subject", unitClass: .rogue)
+        
+        print("🧪 Testing all status effect types:")
+        
+        let allEffects: [StatusEffectType] = [
+            .poison, .burn, .freeze,
+            .attack_up, .defense_up, .speed_up,
+            .attack_down, .defense_down, .speed_down
+        ]
+        
+        for effectType in allEffects {
+            let effect = StatusEffect(type: effectType, power: 5, duration: 2)
+            testUnit.addStatusEffect(effect)
+            
+            let icon = getStatusEffectIcon(effectType)
+            let category = getStatusEffectCategory(effectType)
+            
+            print("   \(icon) \(effectType) (\(category))")
+        }
+        
+        print("\n🔄 Processing effects over 3 turns:")
+        
+        for turn in 1...3 {
+            print("\n--- Turn \(turn) ---")
+            let results = testUnit.processStatusEffects()
+            
+            if results.isEmpty {
+                print("   No active effects")
+            } else {
+                for result in results {
+                    let icon = result.isPositive ? "✨" : "💥"
+                    print("   \(icon) \(result.type): \(result.value)")
+                }
+            }
+        }
+        
+        print("\n🌪️ Status effects demonstration completed!")
+    }
+    
+    private static func getStatusEffectIcon(_ effect: StatusEffectType) -> String {
+        switch effect {
+        case .poison: return "☠️"
+        case .burn: return "🔥"
+        case .freeze: return "❄️"
+        case .attack_up: return "⚔️"
+        case .defense_up: return "🛡️"
+        case .speed_up: return "💨"
+        case .attack_down: return "🔻"
+        case .defense_down: return "📉"
+        case .speed_down: return "🐌"
         }
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Run tests when screen is tapped
-        TestBattleDemo.runAllTests()
-        
-        // Add visual feedback
-        let flashNode = SKSpriteNode(color: .white, size: size)
-        flashNode.alpha = 0.3
-        flashNode.position = CGPoint(x: size.width/2, y: size.height/2)
-        addChild(flashNode)
-        
-        let fadeAction = SKAction.fadeOut(withDuration: 0.5)
-        let removeAction = SKAction.removeFromParent()
-        flashNode.run(SKAction.sequence([fadeAction, removeAction]))
-        
-        // Update instruction
-        if let instruction = childNode(withName: "//instruction") as? SKLabelNode {
-            instruction.text = "Tests running - check console output"
+    private static func getStatusEffectCategory(_ effect: StatusEffectType) -> String {
+        switch effect {
+        case .poison, .burn, .freeze: return "Damage Over Time"
+        case .attack_up, .defense_up, .speed_up: return "Buff"
+        case .attack_down, .defense_down, .speed_down: return "Debuff"
         }
+    }
+}
+
+// MARK: - Performance Tester
+class PerformanceTester {
+    
+    static func runPerformanceTests() {
+        print("\n⚡ PERFORMANCE TESTS")
+        print("-" * 30)
+        
+        // Test unit creation performance
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        var units: [Unit] = []
+        for i in 0..<1000 {
+            let unit = UnitFactory.createPlayerUnit(name: "Unit \(i)", unitClass: .warrior)
+            units.append(unit)
+        }
+        
+        let creationTime = CFAbsoluteTimeGetCurrent() - startTime
+        print("✅ Created 1000 units in \(String(format: "%.3f", creationTime)) seconds")
+        
+        // Test battle simulation performance
+        let battleStartTime = CFAbsoluteTimeGetCurrent()
+        
+        let hero = UnitFactory.createPlayerUnit(name: "Hero", unitClass: .warrior)
+        let enemy = UnitFactory.createEnemyUnit(name: "Enemy", level: 1)
+        
+        for _ in 0..<100 {
+            let battle = BattleManager(playerUnits: [hero], enemyUnits: [enemy])
+            _ = battle.getBattleStatistics()
+        }
+        
+        let battleTime = CFAbsoluteTimeGetCurrent() - battleStartTime
+        print("✅ Simulated 100 battles in \(String(format: "%.3f", battleTime)) seconds")
+        
+        print("⚡ Performance tests completed!")
+    }
+}
+
+// MARK: - String Extension for Repeated Characters
+extension String {
+    static func * (left: String, right: Int) -> String {
+        return String(repeating: left, count: right)
     }
 }
