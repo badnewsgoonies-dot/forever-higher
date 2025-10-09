@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Map Node Types
 enum MapNodeType: String, CaseIterable, Codable {
@@ -42,10 +43,9 @@ class MapNode: Codable, Identifiable, Equatable {
     let position: MapPosition
     var isCompleted: Bool
     var isAvailable: Bool
-    let connectedNodeIds: [String]
+    var connectedNodeIds: [String] = []
     
-    // Optional encounter data
-    var encounterData: [String: Any]? // Will be serialized as needed
+    // Optional encounter data - removed to maintain Codable compliance
     
     init(id: String, type: MapNodeType, position: MapPosition, connectedNodeIds: [String] = []) {
         self.id = id
@@ -54,7 +54,6 @@ class MapNode: Codable, Identifiable, Equatable {
         self.isCompleted = false
         self.isAvailable = false
         self.connectedNodeIds = connectedNodeIds
-        self.encounterData = nil
     }
     
     // MARK: - Codable Implementation
@@ -133,7 +132,7 @@ class MapManager: ObservableObject {
     @Published var currentNodeId: String?
     @Published var visitedNodeIds: Set<String> = []
     
-    private let gameData = GameDataManager.shared
+    private let gameData = GameData.shared
     
     // MARK: - Initialization
     init() {
@@ -227,11 +226,11 @@ class MapManager: ObservableObject {
             nodes: path.nodes
         )
         
-        gameData.currentProgress.currentMapState = mapState
+        gameData.currentMapState = mapState
     }
     
     func loadMapState() {
-        guard let mapState = gameData.currentProgress.currentMapState else { return }
+        guard let mapState = gameData.currentMapState else { return }
         
         // Reconstruct the map path
         currentPath = MapPath(
@@ -434,17 +433,95 @@ struct MapState: Codable {
     let nodes: [MapNode]
 }
 
-// MARK: - GameProgress Extension
-extension GameProgress {
-    var currentMapState: MapState? {
-        get {
-            // In a full implementation, this would be properly stored
-            // For now, return nil to indicate no saved map state
+// MARK: - GameTemplates (Simple Implementation)
+class GameTemplates {
+    
+    static func createEnemyFromTemplate(_ type: String, level: Int) -> Unit? {
+        switch type.lowercased() {
+        case "goblin":
+            let goblin = UnitFactory.createGoblin(name: "Goblin")
+            scaleUnitToLevel(goblin, level: level)
+            return goblin
+            
+        case "orc":
+            let orc = UnitFactory.createOrc(name: "Orc")
+            scaleUnitToLevel(orc, level: level)
+            return orc
+            
+        case "skeleton":
+            let skeleton = Unit(name: "Skeleton", 
+                               unitClass: .rogue,
+                               maxHP: 70,
+                               maxMP: 20,
+                               attack: 12,
+                               defense: 6,
+                               magic: 4,
+                               speed: 10)
+            scaleUnitToLevel(skeleton, level: level)
+            return skeleton
+            
+        case "dragon":
+            let dragon = Unit(name: "Dragon",
+                             unitClass: .mage,
+                             maxHP: 200,
+                             maxMP: 80,
+                             attack: 25,
+                             defense: 15,
+                             magic: 30,
+                             speed: 8)
+            scaleUnitToLevel(dragon, level: level)
+            return dragon
+            
+        default:
             return nil
         }
+    }
+    
+    static func getRandomItem() -> ItemData? {
+        let itemIds = ["health_potion", "mana_potion", "magic_scroll"]
+        guard let randomId = itemIds.randomElement() else { return nil }
+        return ItemData.getItem(randomId)
+    }
+    
+    private static func scaleUnitToLevel(_ unit: Unit, level: Int) {
+        let multiplier = 1.0 + Double(level - 1) * 0.2
+        unit.maxHP = Int(Double(unit.maxHP) * multiplier)
+        unit.maxMP = Int(Double(unit.maxMP) * multiplier)
+        unit.attack = Int(Double(unit.attack) * multiplier)
+        unit.defense = Int(Double(unit.defense) * multiplier)
+        unit.magic = Int(Double(unit.magic) * multiplier)
+        
+        // Initialize current stats to max values
+        unit.currentHP = unit.maxHP
+        unit.currentMP = unit.maxMP
+    }
+}
+
+// MARK: - GameData Extension for Player Units
+extension GameData {
+    func createPlayerTeam() -> [Unit] {
+        return createPlayerTeam(from: currentRun.selectedClasses)
+    }
+}
+extension GameData {
+    private var mapStateKey: String { "CurrentMapState" }
+    
+    var currentMapState: MapState? {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: mapStateKey),
+                  let mapState = try? JSONDecoder().decode(MapState.self, from: data) else {
+                return nil
+            }
+            return mapState
+        }
         set {
-            // In a full implementation, this would save the map state
-            // For now, we'll just acknowledge the assignment
+            if let mapState = newValue {
+                if let data = try? JSONEncoder().encode(mapState) {
+                    UserDefaults.standard.set(data, forKey: mapStateKey)
+                }
+            } else {
+                UserDefaults.standard.removeObject(forKey: mapStateKey)
+            }
         }
     }
 }
@@ -473,8 +550,8 @@ class MapEncounterHandler {
     
     private static func handleBattleNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         // Create appropriate enemies for battle
-        let gameData = GameDataManager.shared
-        let floor = gameData.currentProgress.currentFloor
+        let gameData = GameData.shared
+        let floor = gameData.currentRun.floor
         
         let enemies = createEnemiesForFloor(floor)
         let playerUnits = gameData.playerData.createUnits()
@@ -504,7 +581,7 @@ class MapEncounterHandler {
         print("Resting at node \(node.id)")
         
         // Heal all party members
-        let gameData = GameDataManager.shared
+        let gameData = GameData.shared
         let units = gameData.playerData.createUnits()
         
         for unit in units {
@@ -527,7 +604,7 @@ class MapEncounterHandler {
         print("Finding treasure at node \(node.id)")
         
         // Give random rewards
-        let gameData = GameDataManager.shared
+        let gameData = GameData.shared
         let goldReward = Int.random(in: 50...150)
         gameData.playerData.gold += goldReward
         
