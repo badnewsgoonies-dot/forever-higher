@@ -127,6 +127,9 @@ class MapPath: Codable {
 // MARK: - Map Manager
 class MapManager: ObservableObject {
     
+    // MARK: - Shared Instance
+    static let shared = MapManager()
+    
     // MARK: - Properties
     @Published var currentPath: MapPath?
     @Published var currentNodeId: String?
@@ -135,7 +138,7 @@ class MapManager: ObservableObject {
     private let gameData = GameData.shared
     
     // MARK: - Initialization
-    init() {
+    private init() {
         loadMapState()
     }
     
@@ -497,13 +500,12 @@ class GameTemplates {
     }
 }
 
-// MARK: - GameData Extension for Player Units
+// MARK: - GameData Extension for Player Units and Map State
 extension GameData {
     func createPlayerTeam() -> [Unit] {
         return createPlayerTeam(from: currentRun.selectedClasses)
     }
-}
-extension GameData {
+    
     private var mapStateKey: String { "CurrentMapState" }
     
     var currentMapState: MapState? {
@@ -554,72 +556,189 @@ class MapEncounterHandler {
         let floor = gameData.currentRun.floor
         
         let enemies = createEnemiesForFloor(floor)
-        let playerUnits = gameData.playerData.createUnits()
+        let playerUnits = gameData.createPlayerTeam()
         
-        // This would trigger the battle system
-        print("Starting battle at node \(node.id)")
+        // Create and start the battle using the existing BattleManager
+        let battleManager = BattleManager()
+        battleManager.startBattle(playerTeam: playerUnits, enemyTeam: enemies)
         
-        // For now, simulate battle completion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            completion(true) // Assume victory
+        // Monitor battle completion
+        // Note: In a real implementation, you'd observe the battle manager's state
+        // For now, simulate a battle and then complete the node
+        print("Starting battle at node \(node.id) with \(enemies.count) enemies")
+        
+        // Simulate battle completion after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // Assume victory for now - in real implementation check battleManager.currentPhase
+            let victory = true
+            
+            if victory {
+                // Award experience and gold
+                let expGained = enemies.count * 50
+                let goldGained = enemies.count * 25
+                gameData.addExperience(expGained)
+                gameData.currentRun.gold += goldGained
+                
+                print("Battle won! Gained \(expGained) EXP and \(goldGained) Gold")
+                
+                // Complete the current map node
+                MapManager.shared.completeCurrentNode()
+            }
+            
+            completion(victory)
         }
     }
     
     private static func handleShopNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Entering shop at node \(node.id)")
         // This would open the shop interface
+        
+        // Complete the current map node
+        MapManager.shared.completeCurrentNode()
+        
         completion(true)
     }
     
     private static func handleBossNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Starting boss battle at node \(node.id)")
-        // This would trigger a boss battle
-        completion(true)
+        
+        let gameData = GameData.shared
+        let floor = gameData.currentRun.floor
+        
+        // Create a powerful boss enemy
+        let bossLevel = floor + 2
+        guard let boss = GameTemplates.createEnemyFromTemplate("dragon", level: bossLevel) else {
+            completion(false)
+            return
+        }
+        
+        let playerUnits = gameData.createPlayerTeam()
+        
+        // Create and start boss battle
+        let battleManager = BattleManager()
+        battleManager.startBattle(playerTeam: playerUnits, enemyTeam: [boss])
+        
+        print("Boss battle started against \(boss.unitName) (Level \(bossLevel))")
+        
+        // Simulate boss battle completion
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            let victory = true // Assume victory for now
+            
+            if victory {
+                // Award significant rewards for boss victory
+                let expGained = 200
+                let goldGained = 150
+                gameData.addExperience(expGained)
+                gameData.currentRun.gold += goldGained
+                
+                print("Boss defeated! Gained \(expGained) EXP and \(goldGained) Gold")
+                
+                // Complete the current map node
+                MapManager.shared.completeCurrentNode()
+            }
+            
+            completion(victory)
+        }
     }
     
     private static func handleRestNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Resting at node \(node.id)")
         
-        // Heal all party members
+        // Heal all party members - use the GameData system
         let gameData = GameData.shared
-        let units = gameData.playerData.createUnits()
+        let playerTeam = gameData.createPlayerTeam()
         
-        for unit in units {
-            unit.fullRestore()
+        for unit in playerTeam {
+            unit.currentHP = unit.maxHP
+            unit.currentMP = unit.maxMP
+            print("Healed \(unit.unitName) to full HP/MP")
         }
         
-        // Update saved data
-        gameData.playerData.partyUnits = units.map { UnitData(from: $0) }
+        // Complete the current map node
+        MapManager.shared.completeCurrentNode()
         
         completion(true)
     }
     
     private static func handleEliteNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Starting elite battle at node \(node.id)")
-        // This would trigger an elite battle with better rewards
-        completion(true)
+        
+        let gameData = GameData.shared
+        let floor = gameData.currentRun.floor
+        
+        // Create elite enemies (stronger than regular battles)
+        let eliteLevel = floor + 1
+        var enemies: [Unit] = []
+        
+        // Create 1-2 elite enemies
+        let enemyCount = Int.random(in: 1...2)
+        for i in 0..<enemyCount {
+            let enemyTypes = ["orc", "skeleton"]
+            let enemyType = enemyTypes.randomElement()!
+            
+            if let enemy = GameTemplates.createEnemyFromTemplate(enemyType, level: eliteLevel) {
+                enemy.unitName = "Elite \(enemy.unitName) \(i + 1)"
+                enemies.append(enemy)
+            }
+        }
+        
+        let playerUnits = gameData.createPlayerTeam()
+        
+        // Create and start elite battle
+        let battleManager = BattleManager()
+        battleManager.startBattle(playerTeam: playerUnits, enemyTeam: enemies)
+        
+        print("Elite battle started with \(enemies.count) elite enemies")
+        
+        // Simulate elite battle completion
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            let victory = true // Assume victory for now
+            
+            if victory {
+                // Award better rewards for elite victory
+                let expGained = enemies.count * 75
+                let goldGained = enemies.count * 50
+                gameData.addExperience(expGained)
+                gameData.currentRun.gold += goldGained
+                
+                print("Elite battle won! Gained \(expGained) EXP and \(goldGained) Gold")
+                
+                // Complete the current map node
+                MapManager.shared.completeCurrentNode()
+            }
+            
+            completion(victory)
+        }
     }
     
     private static func handleTreasureNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Finding treasure at node \(node.id)")
         
-        // Give random rewards
+        // Give random rewards using the existing system
         let gameData = GameData.shared
         let goldReward = Int.random(in: 50...150)
-        gameData.playerData.gold += goldReward
+        gameData.currentRun.gold += goldReward
         
         if let item = GameTemplates.getRandomItem() {
-            gameData.playerData.inventory.append(item)
+            gameData.addItemToInventory(item.id)
             print("Found \(item.name)!")
         }
         
         print("Found \(goldReward) gold!")
+        
+        // Complete the current map node
+        MapManager.shared.completeCurrentNode()
+        
         completion(true)
     }
     
     private static func handleEventNode(_ node: MapNode, completion: @escaping (Bool) -> Void) {
         print("Random event at node \(node.id)")
         // This would trigger a random event with choices
+        
+        // Complete the current map node
+        MapManager.shared.completeCurrentNode()
+        
         completion(true)
     }
     
